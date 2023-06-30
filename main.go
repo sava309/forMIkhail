@@ -3,12 +3,11 @@ package main
 import (
 	"database/sql"
 	"fmt"
-
-	_ "github.com/mattn/go-sqlite3"
+	_"github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	database, _ := sql.Open("sqllite3", "./gopher.db") //создаём таблицу
+	database, _ := sql.Open("sqllite3", "./savei.db") //создаём таблицу
 	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, firstname TEXT, lastname TEXT )")
 	statement.Exec()
 	//добавляем в таблицу новые параметры имена
