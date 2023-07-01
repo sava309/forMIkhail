@@ -1,27 +1,42 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	_"github.com/mattn/go-sqlite3"
+	"gorm.io/gorm"
+	"gorm.io/driver/sqlite"
 )
 
-func main() {
-	database, _ := sql.Open("sqllite3", "./savei.db") //создаём таблицу
-	statement, _ := database.Prepare("CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY, firstname TEXT, lastname TEXT )")
-	statement.Exec()
-	//добавляем в таблицу новые параметры имена
-	statement, _ = database.Prepare("INSERT INTO people (firstname, lastname) VALUES (?, ?)")
-	statement.Exec("Lorem", "Ipsum")
+type Product struct {
+	gorm.Model
+	Title  string
+	Code  string
+	Price uint
+}
 
-	rows, _ := database.Query("SELECT id, firstname, lastname From people")
-	var id int //вводим переменные
-	var firstname string
-	var lastname string
-	//ставим указатели
-	for rows.Next() {
-		rows.Scan(&id, &firstname, &lastname)
-		fmt.Printf("%d: %s %s\n", id, firstname, lastname)
+func main() {
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
 	}
 
+	// перенос схемы
+	db.AutoMigrate(&Product{})
+
+	// вставка содержимого
+	db.Create(&Product{Title: "New mobile phone", Code: "D42", Price: 1000})
+	db.Create(&Product{Title: "New Computer", Code: "D43", Price: 3500})
+
+	// чтение содержимого
+	var product Product
+	db.First(&product, 1) // найти продукт с первичным ключём
+	db.First(&product, "code = ?", "D42") // найти товар с кодом D42
+
+	// обновить одно поле
+	db.Model(&product).Update("Price", 2000)
+
+	// обновление нескольких полей
+	db.Model(&product).Updates(Product{Price: 2000, Code: "F42"}) // нулевые поля
+	db.Model(&product).Updates(map[string]interface{}{"Price": 2000, "Code": "F42"})
+
+	// удаление продукта:
+	db.Delete(&product, 1)
 }
